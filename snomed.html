@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnosis Entry - V44 (Gemini API Fixed)</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <style>
+        /* BASE STYLES - Compacted & Elegant */
+        body { background-color: #f0f2f5; font-size: 0.9rem; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+        .main-container { max-width: 1350px; } 
+        .diagnosis-card { border: none; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); background-color: white; }
+        
+        /* HEADER */
+        .header-section { 
+            background-color: #0c8046; /* Green for V44 */
+            color: white; 
+            padding: 12px 25px; 
+            border-bottom: 1px solid #085e33; 
+            border-radius: 12px 12px 0 0; 
+            font-size: 1.1rem; 
+            font-weight: 500; 
+        }
+        
+        .entry-section { padding: 20px 25px 15px; }
+        .form-label { font-size: 0.85rem; margin-bottom: 3px; font-weight: 600;}
+        .form-control-compact, .form-select-compact { height: 35px; padding: 0.375rem 0.75rem; font-size: 0.9rem; border-radius: 6px;}
+        .input-group > .btn { height: 35px; padding: 0 8px; }
+        .search-action-row { align-items: center; padding-bottom: 15px; margin-bottom: 15px; border-bottom: 1px solid #e1e4e8;}
+        .search-results-list {
+            position: absolute;
+            z-index: 1000;
+            background: white;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            max-height: 250px;
+            overflow-y: auto;
+            width: 100%;
+            margin-top: 5px;
+        }
+        .search-results-list .search-item, 
+        .dropdown-item.list-item-action {
+            padding: 8px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+            font-size: 0.9rem;
+        }
+        .search-results-list .search-item:hover,
+        .dropdown-item.list-item-action:hover {
+            background-color: #f7f9fa;
+        }
+        .badge-llm-score { font-size: 0.75rem; margin-right: 5px; }
+        .btn-add-dx { background-color: #0c8046; border: none; color: white; min-width: 85px; height: 35px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); font-weight: 600;}
+        .btn-add-dx:hover { background-color: #0a6638; }
+        .btn-action-group .btn { height: 35px; padding: 0 12px; font-size: 0.9rem; border-radius: 6px; color: #34495e; border-color: #ced4da;}
+        .btn-action-group .btn:hover { background-color: #f0f2f5; }
+        .favorite-btn-details { height: 35px; width: 35px; padding: 0; border-radius: 0 6px 6px 0; background-color: #fff0f0; border-color: #ced4da !important; color: #dc3545; transition: background-color 0.15s;}
+        .favorite-btn-details:hover { background-color: #ffe0e0; }
+        .advance-search-box { display: flex; justify-content: flex-end; align-items: center; gap: 15px; }
+        .opd-ipd-switch { display: flex; align-items: center; font-size: 0.85rem; font-weight: 600; gap: 5px;}
+        .opd-ipd-switch .form-check-label { font-weight: 400; }
+        .attributes-row { margin-top: 5px; padding: 10px 0; align-items: flex-end; }
+        .text-clinical { color: #0c8046 !important; } 
+        .text-admin { color: #1a73e8 !important; } 
+        .stage-group { display: flex; gap: 15px; align-items: center; padding-top: 5px; font-size: 0.85rem; min-height: 35px; }
+        .stage-group .form-check-label { font-weight: 400; font-size: 0.85rem; }
+        .stage-group .form-check-input { margin-top: 0.3em; }
+        .table-pending th, .table-pending td { padding: 0.3rem 0.5rem; font-size: 0.8rem; vertical-align: middle; white-space: normal; }
+        .table-pending thead th { background-color: #e9eff5; color: #34495e; font-weight: 600; border-bottom: 2px solid #cfd3d8; white-space: nowrap;}
+        .table-pending textarea.form-control-sm { resize: vertical; min-height: 30px; max-height: 80px; overflow-y: auto; line-height: 1.2; padding: 0.2rem 0.4rem;}
+        .table-pending select.form-select-sm { padding: 0.2rem 0.4rem; font-size: 0.75rem;}
+        .search-code { font-weight: 700; color: #1a73e8; } 
+        .table-danger { --bs-table-bg-state: #fff0f0; }
+        .unsaved-change { color: #dc3545 !important; font-weight: 600; }
+        .unsaved-change-cell { box-shadow: 0 0 0 1px #dc3545 inset; background-color: #fffafa; }
+        .table-pending td .form-check-input { margin-top: 0; width: 1.1em; height: 1.1em; cursor: pointer;}
+        .clickable-cell { cursor: pointer; transition: background-color 0.1s;}
+        .clickable-cell:hover { background-color: #f0f0f0;}
+        /* End CSS V44 */
+    </style>
+</head>
+<body>
+
+<div class="container main-container mt-4 mb-5">
+    <div class="card diagnosis-card">
+        <div class="header-section">
+            Diagnosis (ICD-10 / SNOMED) Entry - **V44 (Gemini API Call Fixed)**
+        </div>
+        
+        <div class="entry-section">
+            
+            <div class="row g-2 search-action-row">
+                
+                <div class="col-md-5 position-relative">
+                    <label class="form-label visually-hidden">Search Code/Description</label>
+                    <div class="input-group shadow-sm">
+                        <button class="btn btn-sm btn-info text-white" type="button" id="systemToggleBtn" onclick="toggleSearchSystem()" title="Switch Diagnosis System">
+                            ICD-10
+                        </button>
+                        <input type="text" class="form-control form-control-compact" id="icdSearchInput" placeholder="พิมพ์รหัส ICD-10 (เช่น I10, A00.1) หรือคำอธิบาย..." data-search-system="ICD-10">
+                        <button class="btn btn-outline-secondary" type="button" title="Clear" onclick="clearSearch()"><i class="bi bi-x"></i></button>
+                    </div>
+                    <div class="search-results-list d-none" id="searchResults">
+                        <div class="p-2 text-muted fst-italic">เริ่มพิมพ์ 2 ตัวอักษรเพื่อค้นหา</div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3 d-flex justify-content-start">
+                    <div class="btn-group btn-action-group" role="group">
+                        <button class="btn btn-add-dx btn-sm shadow-sm" type="button" onclick="addDiagnosis()">
+                            <i class="bi bi-plus-circle me-1"></i> ADD
+                        </button>
+                        
+                        <div class="btn-group" role="group">
+                             <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" id="pastDxDropdown" data-bs-toggle="dropdown" aria-expanded="false" onclick="renderPastDiagnosisList()">
+                                <i class="bi bi-clock-history me-1 text-info"></i> Past DX
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-start" aria-labelledby="pastDxDropdown" id="pastDxListDropdown">
+                                <li class="dropdown-item text-muted">Loading...</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" id="favoriteDropdown" data-bs-toggle="dropdown" aria-expanded="false" onclick="renderFavoriteList()">
+                                <i class="bi bi-heart-fill me-1 text-danger"></i> Favorite
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="favoriteDropdown" id="favoriteListDropdown">
+                                <li class="dropdown-item text-muted">Loading...</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4 advance-search-box">
+                    <div class="opd-ipd-switch">
+                        OPD
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" id="opdIpdSwitch" onchange="toggleIpdMode()">
+                            <label class="form-check-label" for="opdIpdSwitch">IPD (Reporting)</label>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#advanceSearchModal">
+                       <i class="bi bi-funnel me-1"></i> Advance Search
+                    </button>
+                </div>
+            </div>
+
+            <div class="row g-3 attributes-row align-items-end">
+                
+                <div class="col-md-4 col-clinical" id="clinicalRefinementsSection" style="display: none;">
+                    <label class="form-label text-clinical">Clinical Refinements (SNOMED Attributes):</label>
+                    <div class="input-group mb-2">
+                        <span class="input-group-text form-control-compact text-clinical" style="font-weight: 600; width: 30%;">Site:</span>
+                        <select class="form-select form-select-compact shadow-sm" id="siteSelect" title="Site">
+                            <option value="N/A" selected>N/A</option>
+                            <option value="Lung">Lung</option>
+                            <option value="Liver">Liver</option>
+                            <option value="Brain">Brain</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                         <span class="input-group-text form-control-compact text-clinical" style="font-weight: 600;">Laterality:</span>
+                         <select class="form-select form-select-compact shadow-sm" id="lateralitySelect" title="Laterality">
+                            <option value="N/A" selected>N/A</option>
+                            <option value="Left">ซ้าย (Left)</option>
+                            <option value="Right">ขวา (Right)</option>
+                            <option value="Bilateral">สองข้าง</option>
+                        </select>
+                        <span class="input-group-text form-control-compact text-clinical" style="font-weight: 600;">Severity:</span>
+                        <select class="form-select form-select-compact shadow-sm" id="severitySelect" title="Severity/Acuteness">
+                            <option value="N/A" selected>N/A</option>
+                            <option value="Mild">Mild</option>
+                            <option value="Moderate">Moderate</option>
+                            <option value="Severe">Severe</option>
+                            <option value="Chronic">Chronic</option>
+                            <option value="Acute">Acute</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="col-md-3" id="encounterStageSection" style="display: none;">
+                    <label class="form-label text-admin">IPD Stage (Set on Add):</label>
+                    <div class="stage-group">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="chkAdmission" value="Y">
+                            <label class="form-check-label" for="chkAdmission">Adm.</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="chkPreOp" value="Y">
+                            <label class="form-check-label" for="chkPreOp">Pre-Op</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="chkPostOp" value="Y">
+                            <label class="form-check-label" for="chkPostOp">Post-Op</label>
+                        </div>
+                         <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="chkDischarge" value="Y">
+                            <label class="form-check-label" for="chkDischarge">Dis.</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-5" id="detailsCol">
+                    <label class="form-label text-clinical">Doctor's Note / Refinement (Type: <span id="typeDisplay" class="text-admin">Principal</span>):</label>
+                    <div class="input-group" id="detailsInputGroup">
+                        <input type="text" class="form-control form-control-compact shadow-sm" id="detailsInput" placeholder="บันทึกย่อเพื่อเพิ่มความแม่นยำ">
+                        <button class="btn favorite-btn-details shadow-sm" type="button" title="Add Note to Favorite" onclick="saveFavorite()">
+                            <i class="bi bi-heart-fill"></i>
+                        </button>
+                    </div>
+                     <small id="mandatoryNoteWarning" class="text-danger fw-bold mt-1 d-none"><i class="bi bi-exclamation-triangle-fill"></i> กรุณาใส่รายละเอียดในช่องบันทึกย่อ</small>
+                </div>
+
+            </div>
+            
+        </div> <hr class="mt-0 mb-0 border-light border-2"> 
+
+        <div class="card-body p-4 pt-3">
+            
+            <h6 class="mb-3 fw-bold text-secondary"><i class="bi bi-list-check me-1"></i> รายการ Diagnosis ที่กำลังจะบันทึก:</h6>
+            <div class="table-responsive">
+                <table class="table table-pending table-hover align-middle" id="pendingDiagnosisTable">
+                    <thead>
+                        <tr class="text-center">
+                            <th style="width: 7%;">Code</th>
+                            <th style="width: 17%;">Clinical Description</th>
+                            <th style="width: 8%;">Mapped Code (ICD/SNO)</th> 
+                            <th title="Site" class="snomed-col" style="width: 7%; display: none;">Site</th> 
+                            <th title="Laterality" class="snomed-col" style="width: 6%; display: none;">Laterality</th> 
+                            <th title="Severity/Acuteness" class="snomed-col" style="width: 7%; display: none;">Severity</th> 
+                            <th style="width: 15%;">Doctor DX. (Note)</th> 
+                            <th style="7%;">Type</th> 
+                            <th style="5%;" title="Condition of Admission">Underlying (COA)</th> 
+                            <th class="ipd-col" style="width: 4%; display: none;" title="Admission Stage">Adm.</th>
+                            <th class="ipd-col" style="width: 4%; display: none;" title="Pre-Op Stage">Pre</th>
+                            <th class="ipd-col" style="width: 4%; display: none;" title="Post-Op Stage">Post</th>
+                            <th class="ipd-col" style="width: 4%; display: none;" title="Discharge Stage">Dis.</th>
+                            <th style="4%;">Status</th>
+                            <th style="5%;">Action</th> 
+                        </tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                </table>
+            </div>
+            
+            <div class="d-flex justify-content-end mt-3">
+                <button class="btn btn-success btn-lg shadow-sm" type="button" onclick="saveDiagnosisList()">
+                    <i class="bi bi-check-circle-fill me-1"></i> Confirm & Save (<span id="saveCount">0</span> รายการ)
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="advanceSearchModal" tabindex="-1" aria-labelledby="advanceSearchModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="advanceSearchModalLabel"><i class="bi bi-search me-2"></i> Advance Search Panel</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted">ส่วนนี้คือพื้นที่สำหรับใส่เงื่อนไขการค้นหาขั้นสูงของท่าน เช่น การกรองตามหมวดหมู่, การค้นหาแบบเต็มคำ, หรือการค้นหาข้อมูลอื่น ๆ ที่เกี่ยวข้อง</p>
+        
+        <div class="mb-3">
+             <label for="searchFilter" class="form-label">Search Filter:</label>
+             <input type="text" class="form-control" id="searchFilter" placeholder="Mockup: ใส่เงื่อนไขการค้นหาเพิ่มเติม...">
+        </div>
+        <div class="mb-3">
+             <label for="categoryFilter" class="form-label">Category Filter:</label>
+             <select class="form-select" id="categoryFilter">
+                 <option selected>All Categories</option>
+                 <option>Infectious Diseases</option>
+                 <option>Neoplasms</option>
+                 <option>Circulatory System</option>
+             </select>
+        </div>
+        
+        <button class="btn btn-primary float-end" disabled>Apply Filter</button>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // --- Global Configuration & State ---
+    let searchTimeout;
+    let currentSearchSystem = 'ICD-10'; 
+    
+    // =========================================================================
+    // 🔴 ⚠️ WARNING: GEMINI API KEY IN FRONTEND (PROTOTYPE ONLY) ⚠️ 🔴
+    // REPLACE 'YOUR_GEMINI_API_KEY_HERE' WITH YOUR ACTUAL KEY
+    const GEMINI_API_KEY = 'AIzaSyBX4x_sffJXdjp5tpQGpTgMbNLipDGKOC8'; 
+    const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+
+    // SNOMED CT API (Snowstorm Public Instance)
+    const SNOMED_API_BASE = 'https://browser.ihtsdotools.org/snowstorm/snomed-ct/MAIN/2025-06-01'; 
+    const SNOMED_REFSET_ENDPOINT = `${SNOMED_API_BASE}/members`; 
+    const ICD10_API_BASE = 'https://clinicaltables.nlm.nih.gov/api/icd10cm/v3/search'; 
+    const SNOMED_TO_ICD10_SIMPLE_MAP_REFSET_ID = '447561000124106'; 
+    const DEBOUNCE_DELAY = 300; 
+    // =========================================================================
+
+    // --- Data Storage and State ---
+    let pendingDiagnoses = {};
+    let principalCode = null;
+    let isIpdMode = false;
+
+    // Hardcoded codes for validation rule
+    const X001_CODE = 'X00.1';
+    const Z001_CODE = 'Z00.1';
+    
+    // === MOCKUP DATA: Past DX & Favorites (Used for non-API functions) ===
+    let DIAGNOSES_HISTORY = [
+        { code: 'I10', desc: 'Essential (primary) hypertension', system: 'ICD-10' }, 
+        { code: '44054006', desc: 'Diabetes mellitus type 2', system: 'SNOMED' }
+    ];
+    let FAVORITE_DIAGNOSES = [
+        { code: 'I10', desc: 'Essential (primary) hypertension', system: 'ICD-10' }, 
+        { code: '24700007', desc: 'Appendicitis', system: 'SNOMED' }
+    ];
+    // =======================================
+    
+    // --- Core API/Mapping Functions (Same as V41) ---
+    async function getIcd10Description(icdCode) {
+        // ... (Implementation remains the same)
+        try {
+            const apiUrl = `${ICD10_API_BASE}?sf=code,name&terms=${encodeURIComponent(icdCode)}&maxList=1`;
+            const response = await fetch(apiUrl);
+            if (!response.ok) {
+                return `(Desc Error: ${response.status})`; 
+            }
+            const data = await response.json(); 
+            if (data && data.length > 3 && data[3] && data[3].length > 0) {
+                return data[3][0][1];   
+            }
+            return `(Desc Not Found)`; 
+        } catch (error) {
+            console.error('ICD-10 Description API Fetch Failed:', error);
+            return `(Desc Error: Network Fail)`;
+        }
+    }
+
+
+    async function getMappedCode(code, system) { 
+        // ... (Implementation remains the same for SNOMED-to-ICD mapping)
+        try {
+            if (system === 'SNOMED') {
+                let mappedIcdCode = null;
+                let mapType = null;
+                
+                // 1. ลองใช้ SNOMED to ICD-10 Simple Map Refset (447561000124106)
+                let apiUrl = `${SNOMED_REFSET_ENDPOINT}?active=true&refsetId=${SNOMED_TO_ICD10_SIMPLE_MAP_REFSET_ID}&referencedComponentId=${code}&limit=50`;
+                
+                let response = await fetch(apiUrl);
+                
+                if (response.ok) {
+                     let data = await response.json(); 
+                     if (data.items && data.items.length > 0) {
+                        for (const item of data.items) {
+                            if (item.mapTarget && item.mapTarget.trim() !== '') {
+                                mappedIcdCode = item.mapTarget;
+                                mapType = 'Simple Map';
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                // 2. Fallback: ตรวจสอบ Complex Map (447562003) 
+                if (!mappedIcdCode) {
+                    const ICD10_COMPLEX_MAP_REFSET_ID = '447562003';
+                    apiUrl = `${SNOMED_REFSET_ENDPOINT}?active=true&refsetId=${ICD10_COMPLEX_MAP_REFSET_ID}&referencedComponentId=${code}&limit=1`;
+                    response = await fetch(apiUrl);
+                    
+                    if (response.ok) {
+                        let data = await response.json(); 
+                        if (data.items && data.items.length > 0) {
+                            const additionalFields = data.items[0].additionalFields;
+                            if (additionalFields && additionalFields.mapTarget) {
+                                mappedIcdCode = additionalFields.mapTarget; 
+                                mapType = 'Complex Map';
+                            }
+                        }
+                    }
+                }
+
+                if (mappedIcdCode) {
+                    const icdDescription = await getIcd10Description(mappedIcdCode);
+                    return `${mappedIcdCode} - ${icdDescription} (${mapType})`;
+                }
+
+                return `- (No Map Found)`; 
+
+            } else if (system === 'ICD-10') {
+                return `- (ICD -> SNO Map Mock)`; 
+            }
+            return '-';
+
+        } catch (error) {
+            console.error('Mapping API Fetch Failed (Network/CORS):', error);
+            return `Error: Network Fail`;
+        }
+    }
+    // -----------------------------
+
+    // =========================================================================
+    // 🧠 V44: GEMINI DIRECT API CALL FUNCTION (FIXED PAYLOAD)
+    // =========================================================================
+
+    /**
+     * @description REAL CALL: Calls the actual Gemini API (gemini-2.5-flash) for structured SNOMED suggestions.
+     * Uses a highly structured prompt to enforce JSON output.
+     * @param {string} query The natural language text input by the physician.
+     * @returns {Array<Object>} An array of suggested SNOMED concepts.
+     */
+    async function callGeminiForSnomedSuggestions(query) {
+        
+        if (GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY_HERE') {
+             alert('❌ Error: กรุณากำหนด GEMINI_API_KEY ในโค้ดก่อนทำการทดสอบ');
+             return [];
+        }
+
+        const PROMPT = `You are a clinical coder expert tasked with converting raw clinical text into a structured list of relevant SNOMED CT concepts.
+Analyze the following doctor's note and extract the most appropriate Clinical Findings, Disorders, and Procedures.
+You MUST return the output as a JSON array only, following this exact schema:
+[
+  {
+    "code": "SNOMED Concept ID (e.g., 363746003)",
+    "description": "SNOMED Preferred Term and Type (e.g., Acute pharyngitis (disorder))",
+    "system": "SNOMED",
+    "score": "Relevance and Clinical Type (e.g., 'Disorder (High)', 'Finding (Medium)', 'Procedure (Low)')"
+  }
+]
+Do not include any descriptive text, explanations, or markdown fences (like \`\`\`json) outside of the JSON array itself.
+The output MUST be parsable as a standard JSON array.
+
+Clinical Text: "${query}"`;
+        
+        console.log(`LLM V44: Calling Gemini API for query: "${query}"`);
+
+        try {
+            const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{
+                        role: 'user',
+                        parts: [{ text: PROMPT }]
+                    }],
+                    // 🚨 FIXED: Renamed 'config' to 'generationConfig'
+                    generationConfig: { 
+                         // Use a lower temperature for higher factual accuracy (coding)
+                        temperature: 0.1 
+                    }
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error("Gemini API Error:", errorData);
+                // Display the error message from the API to the user
+                throw new Error(`Gemini API Failed with status: ${response.status}. Message: ${errorData.error.message || 'Check browser console for details.'}`);
+            }
+
+            const data = await response.json();
+            
+            // Extract the generated text (which should be pure JSON string)
+            const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+
+            if (!generatedText) {
+                 return [{ code: 'NO_RES', description: 'Gemini returned no valid content.', system: 'SNOMED', score: 'Error' }];
+            }
+            
+            // Attempt to parse the text as JSON
+            let results;
+            try {
+                 // Clean up common LLM errors (e.g., wrapping in ```json)
+                const cleanedText = generatedText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+                results = JSON.parse(cleanedText);
+
+            } catch (e) {
+                console.error("Failed to parse JSON response from Gemini:", e);
+                console.log("Raw response text:", generatedText);
+                return [{ code: 'JSON_ERR', description: 'Failed to parse LLM JSON output. Check console.', system: 'SNOMED', score: 'Error' }];
+            }
+            
+            // Validate the parsed structure
+            if (Array.isArray(results) && results.every(item => item.code && item.description && item.system === 'SNOMED')) {
+                return results;
+            } else {
+                console.error("JSON structure from Gemini is incorrect:", results);
+                return [{ code: 'STRUCT_ERR', description: 'LLM returned invalid result structure.', system: 'SNOMED', score: 'Error' }];
+            }
+
+        } catch (error) {
+            console.error('Failed to call Gemini API:', error);
+            alert(`❌ Gemini API Call ล้มเหลว: ${error.message}`);
+            return [];
+        }
+    }
+    // =========================================================================
+
+
+    // --- Core UI/State Functions (Unchanged) ---
+    function updateLayoutForSystem(system) {
+        const clinicalSection = document.getElementById('clinicalRefinementsSection');
+        const stageCol = document.getElementById('encounterStageSection');
+        const detailsCol = document.getElementById('detailsCol');
+        
+        const isSNOMED = system === 'SNOMED';
+        const isIPD = isIpdMode;
+
+        clinicalSection.style.display = isSNOMED ? 'block' : 'none'; 
+
+        stageCol.style.display = isIPD ? 'block' : 'none';
+        
+        let detailsColSize = 12; 
+        if (isSNOMED) detailsColSize -= 4; 
+        if (isIPD) detailsColSize -= 3; 
+        
+        detailsCol.className = `col-md-${detailsColSize}`;
+        
+        document.querySelectorAll('.snomed-col').forEach(th => {
+            th.style.display = isSNOMED ? 'table-cell' : 'none';
+        });
+        
+        document.querySelectorAll('.ipd-col').forEach(el => {
+            el.style.display = isIPD ? 'table-cell' : 'none';
+        });
+
+        document.getElementById('typeDisplay').textContent = (Object.keys(pendingDiagnoses).length === 0) ? 'Principal' : 'Comorbidity';
+
+        renderPendingTable();
+    }
+
+    function toggleSearchSystem() {
+        const toggleBtn = document.getElementById('systemToggleBtn');
+        const searchInput = document.getElementById('icdSearchInput');
+        
+        if (currentSearchSystem === 'ICD-10') {
+            currentSearchSystem = 'SNOMED';
+            toggleBtn.textContent = 'SNOMED (Smart Search)'; // Updated text
+            toggleBtn.classList.remove('btn-info', 'text-white');
+            toggleBtn.classList.add('btn-warning', 'text-dark');
+            searchInput.placeholder = 'พิมพ์วลีทางการแพทย์ (เช่น Fever 38.5 and sore throat for 2 days)...'; // Updated placeholder
+            searchInput.dataset.searchSystem = 'SNOMED';
+            
+            document.getElementById('siteSelect').value = 'N/A'; 
+            document.getElementById('lateralitySelect').value = 'N/A';
+            document.getElementById('severitySelect').value = 'N/A'; 
+            
+            clearSearch(false);
+        } else {
+            currentSearchSystem = 'ICD-10';
+            toggleBtn.textContent = 'ICD-10'; 
+            toggleBtn.classList.remove('btn-warning', 'text-dark');
+            toggleBtn.classList.add('btn-info', 'text-white');
+            searchInput.placeholder = 'พิมพ์รหัส ICD-10 (เช่น I10, A00.1) หรือคำอธิบาย...';
+            searchInput.dataset.searchSystem = 'ICD-10';
+
+            clearSearch(false);
+        }
+        updateLayoutForSystem(currentSearchSystem); 
+    }
+    
+    const getCheckboxStatus = (id) => document.getElementById(id).checked ? 'Y' : 'N';
+    const clearStageCheckboxes = () => {
+        document.getElementById('chkAdmission').checked = false;
+        document.getElementById('chkPreOp').checked = false;
+        document.getElementById('chkPostOp').checked = false;
+        document.getElementById('chkDischarge').checked = false;
+    };
+    
+    function updateDefaultTypeSelect() {
+        const typeDisplay = document.getElementById('typeDisplay');
+        const count = Object.keys(pendingDiagnoses).length;
+        if (count === 0) {
+            typeDisplay.textContent = 'Principal';
+        } else {
+            typeDisplay.textContent = 'Comorbidity';
+        }
+    }
+
+    function toggleIpdMode() {
+        isIpdMode = document.getElementById('opdIpdSwitch').checked;
+        updateLayoutForSystem(currentSearchSystem);
+    }
+
+    function clearSearch(clearInput = true) {
+        if (clearInput) {
+             document.getElementById('icdSearchInput').value = '';
+        }
+        document.getElementById('searchResults').classList.add('d-none');
+        document.getElementById('icdSearchInput').dataset.selectedCode = '';
+        document.getElementById('icdSearchInput').dataset.selectedDesc = '';
+        
+        document.getElementById('detailsInput').value = '';
+        document.getElementById('siteSelect').value = 'N/A'; 
+        document.getElementById('lateralitySelect').value = 'N/A';
+        document.getElementById('severitySelect').value = 'N/A'; 
+        
+        document.getElementById('detailsInputGroup').classList.remove('force-details-input'); 
+        document.getElementById('mandatoryNoteWarning').classList.add('d-none'); 
+
+        clearStageCheckboxes();
+        updateDefaultTypeSelect();
+    }
+
+    function selectDiagnosis(code, desc, system) {
+        document.getElementById('icdSearchInput').value = code + ' - ' + desc;
+        document.getElementById('searchResults').classList.add('d-none');
+        document.getElementById('icdSearchInput').dataset.selectedCode = code;
+        document.getElementById('icdSearchInput').dataset.selectedDesc = desc;
+        
+        currentSearchSystem = system;
+        const toggleBtn = document.getElementById('systemToggleBtn');
+        if (system === 'SNOMED') {
+             toggleBtn.textContent = 'SNOMED (Gemini Smart Search)'; 
+             toggleBtn.classList.remove('btn-info', 'text-white');
+             toggleBtn.classList.add('btn-warning', 'text-dark');
+             document.getElementById('icdSearchInput').placeholder = 'พิมพ์วลีทางการแพทย์ (เช่น Fever 38.5 and sore throat)...';
+        } else {
+             toggleBtn.textContent = 'ICD-10'; 
+             toggleBtn.classList.remove('btn-warning', 'text-dark');
+             toggleBtn.classList.add('btn-info', 'text-white');
+             document.getElementById('icdSearchInput').placeholder = 'พิมพ์รหัส ICD-10 (เช่น I10, A00.1) หรือคำอธิบาย...';
+        }
+        
+        updateLayoutForSystem(system);
+        
+        clearStageCheckboxes();
+        document.getElementById('detailsInput').value = '';
+        
+        document.getElementById('siteSelect').value = 'N/A';
+        document.getElementById('lateralitySelect').value = 'N/A'; 
+        document.getElementById('severitySelect').value = 'N/A'; 
+        
+        const detailsInputGroup = document.getElementById('detailsInputGroup');
+        const mandatoryWarning = document.getElementById('mandatoryNoteWarning');
+
+        if (code === X001_CODE || code === Z001_CODE) {
+            detailsInputGroup.classList.add('force-details-input');
+            mandatoryWarning.classList.remove('d-none');
+            document.getElementById('detailsInput').focus();
+        } else {
+            detailsInputGroup.classList.remove('force-details-input');
+            mandatoryWarning.classList.add('d-none');
+        }
+    }
+
+
+    async function fetchAndRenderResults(query) {
+        const loadingIndicator = document.getElementById('searchResults');
+        
+        let results = [];
+        
+        try {
+            if (currentSearchSystem === 'SNOMED') {
+                 loadingIndicator.innerHTML = '<div class="p-2 text-center text-success fst-italic"><i class="bi bi-arrow-repeat spin me-2"></i>กำลังค้นหาด้วย Gemini AI...</div>';
+                 loadingIndicator.classList.remove('d-none');
+                
+                // --- V44: Gemini API Call (Fixed) ---
+                results = await callGeminiForSnomedSuggestions(query);
+                
+            } else if (currentSearchSystem === 'ICD-10') {
+                 loadingIndicator.innerHTML = '<div class="p-2 text-center text-primary fst-italic"><i class="bi bi-arrow-repeat spin me-2"></i>กำลังค้นหา ICD-10...</div>';
+                 loadingIndicator.classList.remove('d-none');
+                
+                // ICD-10 Search (NIH Clinical Tables API) - Standard V40 logic
+                let apiUrl = `${ICD10_API_BASE}?sf=code,name&terms=${encodeURIComponent(query)}&maxList=50`;
+                const response = await fetch(apiUrl);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const data = await response.json(); 
+                
+                if (data && data.length > 3 && data[3]) {
+                    results = data[3].map(item => ({
+                        code: item[0],          
+                        description: item[1],   
+                        system: 'ICD-10',
+                        score: 'ICD-10 Match' 
+                    }));
+                }
+            }
+
+            renderSearchResults(results, query);
+            
+        } catch (error) {
+            console.error(`Search failed for ${currentSearchSystem}:`, error);
+            loadingIndicator.innerHTML = `<div class="p-2 text-danger fw-bold">❌ Error: ไม่สามารถเชื่อมต่อ API ${currentSearchSystem} ได้ (${error.message})</div>`;
+        }
+    }
+
+    function renderSearchResults(results, term) {
+        const resultsDiv = document.getElementById('searchResults');
+        resultsDiv.innerHTML = '';
+        
+        if (results && results.length > 0) {
+            results.forEach(dx => {
+                const code = dx.code;
+                const desc = dx.description;
+                const system = dx.system;
+                const score = dx.score || 'N/A'; 
+                
+                const isHardcode = (code === X001_CODE || code === Z001_CODE); 
+                const isSnomed = system === 'SNOMED';
+                
+                const systemLabel = isSnomed ? 'SNOMED' : 'ICD-10';
+                const badgeClass = isSnomed ? 'bg-warning text-dark' : 'bg-info'; 
+                
+                const hardcodeBadge = isHardcode ? '<span class="badge bg-danger float-end ms-2">DETAIL REQ.</span>' : '';
+                const systemBadge = `<span class="badge ${badgeClass}">${systemLabel.slice(0, 4)}</span>`;
+                const scoreBadge = isSnomed ? `<span class="badge badge-llm-score bg-success-subtle text-success border border-success">${score}</span>` : '';
+
+
+                const item = document.createElement('div');
+                item.className = 'search-item';
+                const safeDesc = desc.replace(/'/g, "\\'"); 
+                item.innerHTML = `${systemBadge} ${scoreBadge} <span class="search-code">${code}</span> - ${desc} ${hardcodeBadge}`;
+                item.onclick = () => selectDiagnosis(code, safeDesc, system); 
+                resultsDiv.appendChild(item);
+            });
+        } else {
+            resultsDiv.innerHTML = `<div class="p-2 text-muted fst-italic">ไม่พบรหัสที่ตรงกับ "${term}" ในระบบ ${currentSearchSystem}</div>`;
+        }
+        resultsDiv.classList.remove('d-none');
+    }
+
+    function searchDiagnosis(query) {
+        if (searchTimeout) {
+            clearTimeout(searchTimeout);
+        }
+        
+        const term = query.trim();
+        // LLM Search can be more flexible (min 1 char for quick prototype testing)
+        const minLength = currentSearchSystem === 'SNOMED' ? 1 : 2; 
+        
+        if (term.length >= minLength) { 
+            document.getElementById('icdSearchInput').dataset.selectedCode = '';
+            document.getElementById('icdSearchInput').dataset.selectedDesc = '';
+
+            searchTimeout = setTimeout(() => {
+                fetchAndRenderResults(term);
+            }, DEBOUNCE_DELAY);
+        } else {
+            document.getElementById('searchResults').classList.add('d-none');
+        }
+    }
+
+    document.getElementById('icdSearchInput').addEventListener('input', function() {
+        searchDiagnosis(this.value);
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!document.getElementById('icdSearchInput').contains(e.target) && 
+            !document.getElementById('searchResults').contains(e.target) &&
+            !e.target.closest('.btn-group.btn-action-group')
+        ) {
+            document.getElementById('searchResults').classList.add('d-none');
+        }
+    });
+
+    function renderPastDiagnosisList() {
+        const dropdown = document.getElementById('pastDxListDropdown');
+        dropdown.innerHTML = ''; 
+
+        if (DIAGNOSES_HISTORY.length === 0) {
+            dropdown.innerHTML = '<li class="dropdown-item text-muted">ยังไม่มีรายการ Past Diagnosis ที่บันทึกไว้</li>';
+            return;
+        }
+
+        DIAGNOSES_HISTORY.forEach(dx => {
+            const listItem = document.createElement('li');
+            const systemBadge = (dx.system === 'SNOMED') ? 'bg-warning text-dark' : 'bg-info'; 
+            
+            const safeDesc = dx.desc.replace(/'/g, "\\'"); 
+            
+            listItem.innerHTML = `
+                <a class="dropdown-item list-item-action" href="#" onclick="event.preventDefault(); selectDiagnosis('${dx.code}', '${safeDesc}', '${dx.system}')">
+                    <span class="badge ${systemBadge} me-2">${dx.system.slice(0, 4)}</span>
+                    <span class="search-code">${dx.code}</span> - ${dx.desc}
+                </a>
+            `;
+            const wrapper = document.createElement('li');
+            wrapper.appendChild(listItem.firstElementChild);
+            dropdown.appendChild(wrapper); 
+        });
+    }
+
+    function renderFavoriteList() {
+        const dropdown = document.getElementById('favoriteListDropdown');
+        dropdown.innerHTML = ''; 
+
+        if (FAVORITE_DIAGNOSES.length === 0) {
+            dropdown.innerHTML = '<li class="dropdown-item text-muted">ยังไม่มีรายการโปรดที่บันทึกไว้</li>';
+            return;
+        }
+
+        FAVORITE_DIAGNOSES.forEach(dx => {
+            const listItem = document.createElement('li');
+            const systemBadge = (dx.system === 'SNOMED') ? 'bg-warning text-dark' : 'bg-info'; 
+
+            const safeDesc = dx.desc.replace(/'/g, "\\'"); 
+            
+            listItem.innerHTML = `
+                <a class="dropdown-item list-item-action" href="#" onclick="event.preventDefault(); selectDiagnosis('${dx.code}', '${safeDesc}', '${dx.system}')">
+                    <span class="badge ${systemBadge} me-2">${dx.system.slice(0, 4)}</span>
+                    <span class="search-code">${dx.code}</span> - ${dx.desc}
+                </a>
+            `;
+            const wrapper = document.createElement('li');
+            wrapper.appendChild(listItem.firstElementChild);
+            dropdown.appendChild(wrapper);
+        });
+    }
+    
+    function saveFavorite() {
+        const code = document.getElementById('icdSearchInput').dataset.selectedCode;
+        const desc = document.getElementById('icdSearchInput').dataset.selectedDesc;
+        const system = currentSearchSystem; 
+
+        if (!code) {
+            alert('❌ กรุณาเลือก Diagnosis จากรายการค้นหาก่อน เพื่อบันทึกเป็นรายการโปรด');
+            return;
+        }
+        
+        if (!FAVORITE_DIAGNOSES.some(dx => dx.code === code)) {
+            FAVORITE_DIAGNOSES.push({ code, desc, system: system });
+            alert(`✅ บันทึก ${code} เป็นรายการโปรดเรียบร้อยแล้ว!`);
+            renderFavoriteList(); 
+        } else {
+            alert(`💡 ${code} อยู่ในรายการโปรดอยู่แล้ว`);
+        }
+    }
+    
+    function checkIsEdited(dx) {
+         if (!dx || !dx.original) return false;
+
+         let isIpdStageEdited = (dx.admission !== dx.original.admission) || 
+                               (dx.preOp !== dx.original.preOp) || 
+                               (dx.postOp !== dx.original.postOp) || 
+                               (dx.discharge !== dx.original.discharge);
+                               
+         let isClinicalEdited = (dx.site !== dx.original.site) || 
+                                (dx.laterality !== dx.original.laterality) || 
+                                (dx.severity !== dx.original.severity);
+        
+         let isAdminEdited = (dx.type !== dx.original.type) ||
+                             (dx.underlying !== dx.original.underlying); 
+
+         return (dx.docDx !== dx.original.docDx) || 
+                isAdminEdited ||
+                isIpdStageEdited ||
+                isClinicalEdited; 
+    }
+
+    async function addDiagnosis() { 
+        const code = document.getElementById('icdSearchInput').dataset.selectedCode;
+        const desc = document.getElementById('icdSearchInput').dataset.selectedDesc;
+        let type = (Object.keys(pendingDiagnoses).length === 0) ? 'Principal' : 'Comorbidity';
+        
+        const docDx = document.getElementById('detailsInput').value.trim();
+        const detailsInputGroup = document.getElementById('detailsInputGroup');
+        const mandatoryWarning = document.getElementById('mandatoryNoteWarning');
+        const system = currentSearchSystem; 
+        
+        const site = document.getElementById('siteSelect').value; 
+        const laterality = document.getElementById('lateralitySelect').value;
+        const severity = document.getElementById('severitySelect').value; 
+        
+        const underlying = 'N';
+
+
+        if (!code) {
+            alert('❌ กรุณาเลือก Diagnosis จากรายการค้นหา (SNOMED/ICD) ก่อน');
+            return;
+        }
+
+        if ((code === X001_CODE || code === Z001_CODE) && docDx === '') {
+            alert(`⚠️ ข้อบังคับ: หากเลือก ${code} กรุณาใส่รายละเอียดในช่อง Doctor's Note`);
+            detailsInputGroup.classList.add('force-details-input');
+            mandatoryWarning.classList.remove('d-none');
+            document.getElementById('detailsInput').focus();
+            return;
+        }
+        
+        detailsInputGroup.classList.remove('force-details-input');
+        mandatoryWarning.classList.add('d-none');
+
+        if (pendingDiagnoses[code]) {
+            alert(`❌ รหัส ${code} ถูกเพิ่มแล้วในรายการ`);
+            return;
+        }
+
+        if (type === 'Principal') {
+            if (principalCode) {
+                pendingDiagnoses[principalCode].type = 'Secondary';
+                pendingDiagnoses[principalCode].isEdited = checkIsEdited(pendingDiagnoses[principalCode]);
+            }
+            principalCode = code;
+        }
+        
+        const originalType = type;
+        const originalDocDx = docDx || desc;
+        const originalUnderlying = underlying; 
+        const admissionStatus = getCheckboxStatus('chkAdmission');
+        const preOpStatus = getCheckboxStatus('chkPreOp');
+        const postOpStatus = getCheckboxStatus('chkPostOp');
+        const dischargeStatus = getCheckboxStatus('chkDischarge');
+        const originalSite = site; 
+        const originalLaterality = laterality; 
+        const originalSeverity = severity;   
+        
+        let mappedCodeResult = 'กำลัง Mapping...'; 
+        
+        pendingDiagnoses[code] = { 
+            code, 
+            desc, 
+            docDx: originalDocDx, 
+            type: originalType,
+            underlying: originalUnderlying, 
+            admission: admissionStatus,
+            preOp: preOpStatus,
+            postOp: postOpStatus,
+            discharge: dischargeStatus,
+            system: system, 
+            mappedCode: mappedCodeResult, 
+            site: originalSite, 
+            laterality: originalLaterality, 
+            severity: originalSeverity,     
+            status: 'Active',
+            original: {
+                 type: originalType,
+                 docDx: originalDocDx,
+                 underlying: originalUnderlying, 
+                 admission: admissionStatus,
+                 preOp: preOpStatus,
+                 postOp: postOpStatus,
+                 discharge: dischargeStatus,
+                 site: originalSite, 
+                 laterality: originalLaterality, 
+                 severity: originalSeverity      
+            },
+            isEdited: false
+        };
+        
+        clearSearch();
+        renderPendingTable(); 
+
+        mappedCodeResult = await getMappedCode(code, system); 
+        
+        if(pendingDiagnoses[code]) { 
+            pendingDiagnoses[code].mappedCode = mappedCodeResult;
+        }
+        
+        renderPendingTable();
+    }
+    
+    function resetRowChanges(code) {
+        if (!confirm(`คุณต้องการยกเลิกการแก้ไขทั้งหมดสำหรับรหัส ${code} และย้อนกลับไปสู่ค่าเดิมใช่หรือไม่?`)) {
+            return;
+        }
+        
+        const dx = pendingDiagnoses[code];
+        if (!dx) return;
+
+        dx.type = dx.original.type;
+        dx.docDx = dx.original.docDx;
+        dx.underlying = dx.original.underlying;
+        dx.admission = dx.original.admission; 
+        dx.preOp = dx.original.preOp;         
+        dx.postOp = dx.original.postOp;       
+        dx.discharge = dx.original.discharge; 
+        dx.site = dx.original.site; 
+        dx.laterality = dx.original.laterality; 
+        dx.severity = dx.original.severity; 
+        
+        dx.isEdited = false;
+        
+        if (dx.type === 'Principal') {
+            principalCode = code;
+        }
+        
+        renderPendingTable();
+    }
+
+    function updateIpdStageFromTable(code, stage, checked) {
+        const dx = pendingDiagnoses[code];
+        const newValue = checked ? 'Y' : 'N';
+        dx[stage] = newValue; 
+        dx.isEdited = checkIsEdited(dx);
+        renderPendingTable();
+    }
+    
+    function toggleUnderlying(code) {
+        const dx = pendingDiagnoses[code];
+        const currentStatus = dx.underlying;
+        const newStatus = (currentStatus === 'N') ? 'Y' : 'N';
+        dx.underlying = newStatus;
+        dx.isEdited = checkIsEdited(dx);
+        renderPendingTable();
+    }
+
+    function updateSite(code, newValue) {
+        const dx = pendingDiagnoses[code];
+        dx.site = newValue;
+        dx.isEdited = checkIsEdited(dx);
+        renderPendingTable();
+    }
+    function updateLaterality(code, newValue) {
+        const dx = pendingDiagnoses[code];
+        dx.laterality = newValue;
+        dx.isEdited = checkIsEdited(dx);
+        renderPendingTable();
+    }
+    function updateSeverity(code, newValue) {
+        const dx = pendingDiagnoses[code];
+        dx.severity = newValue;
+        dx.isEdited = checkIsEdited(dx);
+        renderPendingTable();
+    }
+
+    function updateDocDx(code, newValue) {
+        const dx = pendingDiagnoses[code];
+        dx.docDx = newValue;
+        dx.isEdited = checkIsEdited(dx);
+        renderPendingTable();
+    }
+
+
+    function renderPendingTable() {
+        const tableBody = document.getElementById('pendingDiagnosisTable').querySelector('tbody');
+        tableBody.innerHTML = ''; 
+        let rowCount = 0;
+        
+        const isSNOMEDMode = currentSearchSystem === 'SNOMED';
+
+        document.querySelectorAll('.ipd-col').forEach(el => {
+            el.style.display = isIpdMode ? 'table-cell' : 'none';
+        });
+
+        document.querySelectorAll('.snomed-col').forEach(th => {
+            th.style.display = 'none'; 
+        });
+        
+        updateDefaultTypeSelect(); 
+
+        for (const code in pendingDiagnoses) {
+            const dx = pendingDiagnoses[code];
+            
+            dx.isEdited = checkIsEdited(dx); 
+            const rowClass = dx.isEdited ? 'table-danger' : ''; 
+
+            const isDocDxEdited = dx.docDx !== dx.original.docDx;
+            const isTypeEdited = dx.type !== dx.original.type;
+            const isUnderlyingEdited = dx.underlying !== dx.original.underlying; 
+            
+            const isSiteEdited = dx.site !== dx.original.site; 
+            const isLateralityEdited = dx.laterality !== dx.original.laterality;
+            const isSeverityEdited = dx.severity !== dx.original.severity;
+
+            const docDxCellClass = isDocDxEdited ? 'unsaved-change-cell' : '';
+            const typeCellClass = isTypeEdited ? 'unsaved-change-cell' : '';
+            const underlyingCellClass = isUnderlyingEdited ? 'unsaved-change-cell' : '';
+            
+            const siteCellClass = isSiteEdited && dx.system === 'SNOMED' ? 'unsaved-change-cell' : ''; 
+            const lateralityCellClass = isLateralityEdited && dx.system === 'SNOMED' ? 'unsaved-change-cell' : '';
+            const severityCellClass = isSeverityEdited && dx.system === 'SNOMED' ? 'unsaved-change-cell' : '';
+
+            
+            const clinicalColumns = `
+                <td class="${siteCellClass}" style="display: ${dx.system === 'SNOMED' ? 'table-cell' : 'none'};">
+                     <select class="form-select form-select-sm" onchange="updateSite('${code}', this.value)">
+                        <option value="N/A" ${dx.site === 'N/A' ? 'selected' : ''}>N/A</option>
+                        <option value="Lung" ${dx.site === 'Lung' ? 'selected' : ''}>Lung</option>
+                        <option value="Liver" ${dx.site === 'Liver' ? 'selected' : ''}>Liver</option>
+                        <option value="Brain" ${dx.site === 'Brain' ? 'selected' : ''}>Brain</option>
+                    </select>
+                </td>
+                <td class="${lateralityCellClass}" style="display: ${dx.system === 'SNOMED' ? 'table-cell' : 'none'};">
+                    <select class="form-select form-select-sm" onchange="updateLaterality('${code}', this.value)">
+                        <option value="N/A" ${dx.laterality === 'N/A' ? 'selected' : ''}>N/A</option>
+                        <option value="Left" ${dx.laterality === 'Left' ? 'selected' : ''}>ซ้าย</option>
+                        <option value="Right" ${dx.laterality === 'Right' ? 'selected' : ''}>ขวา</option>
+                        <option value="Bilateral" ${dx.laterality === 'Bilateral' ? 'selected' : ''}>สองข้าง</option>
+                    </select>
+                </td>
+                <td class="${severityCellClass}" style="display: ${dx.system === 'SNOMED' ? 'table-cell' : 'none'};">
+                     <select class="form-select form-select-sm" onchange="updateSeverity('${code}', this.value)">
+                        <option value="N/A" ${dx.severity === 'N/A' ? 'selected' : ''}>N/A</option>
+                        <option value="Mild" ${dx.severity === 'Mild' ? 'selected' : ''}>Mild</option>
+                        <option value="Moderate" ${dx.severity === 'Moderate' ? 'selected' : ''}>Moderate</option>
+                        <option value="Severe" ${dx.severity === 'Severe' ? 'selected' : ''}>Severe</option>
+                        <option value="Chronic" ${dx.severity === 'Chronic' ? 'selected' : ''}>Chronic</option>
+                        <option value="Acute" ${dx.severity === 'Acute' ? 'selected' : ''}>Acute</option>
+                    </select>
+                </td>
+            `;
+            
+            const shouldShowSnomedColumns = Object.values(pendingDiagnoses).some(d => d.system === 'SNOMED');
+            document.querySelectorAll('.snomed-col').forEach(th => {
+                th.style.display = shouldShowSnomedColumns ? 'table-cell' : 'none';
+            });
+
+
+            const ipdColumns = `
+                <td class="text-center ipd-col" style="display: ${isIpdMode ? 'table-cell' : 'none'};">
+                    <input type="checkbox" class="form-check-input" ${dx.admission === 'Y' ? 'checked' : ''} onchange="updateIpdStageFromTable('${code}', 'admission', this.checked)">
+                </td>
+                <td class="text-center ipd-col" style="display: ${isIpdMode ? 'table-cell' : 'none'};">
+                    <input type="checkbox" class="form-check-input" ${dx.preOp === 'Y' ? 'checked' : ''} onchange="updateIpdStageFromTable('${code}', 'preOp', this.checked)">
+                </td>
+                <td class="text-center ipd-col" style="display: ${isIpdMode ? 'table-cell' : 'none'};">
+                    <input type="checkbox" class="form-check-input" ${dx.postOp === 'Y' ? 'checked' : ''} onchange="updateIpdStageFromTable('${code}', 'postOp', this.checked)">
+                </td>
+                <td class="text-center ipd-col" style="display: ${isIpdMode ? 'table-cell' : 'none'};">
+                    <input type="checkbox" class="form-check-input" ${dx.discharge === 'Y' ? 'checked' : ''} onchange="updateIpdStageFromTable('${code}', 'discharge', this.checked)">
+                </td>
+            `;
+            
+            const systemBadge = (dx.system === 'SNOMED') ? 
+                '<span class="badge bg-warning text-dark me-1" title="SNOMED CT Source">S</span>' : 
+                '<span class="badge bg-info me-1" title="ICD-10 Source">I</span>';
+            
+            const docDxValue = dx.docDx.replace(/"/g, '&quot;');
+            
+            const resetButton = dx.isEdited ? 
+                `<button class="btn btn-sm btn-outline-danger p-0 px-1 me-1" title="Reset Changes" onclick="resetRowChanges('${code}')">
+                    <i class="bi bi-arrow-counterclockwise" style="font-size: 0.8rem;"></i>
+                </button>` : '';
+
+            const mappedCodeContent = dx.mappedCode.includes('Mapping...') 
+                ? '<i class="bi bi-arrow-repeat spin me-1"></i> Mapping...' 
+                : dx.mappedCode;
+            
+            const newRow = `
+                <tr id="row-${code}" class="${rowClass}">
+                    <td class="text-start">${systemBadge}<span class="search-code">${code}</span></td>
+                    <td class="text-start">${dx.desc}</td>
+                    <td class="text-start">
+                        <span class="text-secondary fw-bold" style="font-size: 0.75rem;">${mappedCodeContent}</span>
+                    </td>
+                    ${shouldShowSnomedColumns ? clinicalColumns : ''} <td class="${docDxCellClass}">
+                        <textarea rows="1" class="form-control form-control-sm" 
+                                  onchange="updateDocDx('${code}', this.value)">${docDxValue}</textarea>
+                    </td>
+                    <td class="${typeCellClass}">
+                        <select class="form-select form-select-sm" onchange="updateType('${code}', this.value)">
+                            <option value="Principal" ${dx.type === 'Principal' ? 'selected' : ''}>Principal</option>
+                            <option value="Secondary" ${dx.type === 'Secondary' ? 'selected' : ''}>Secondary</option>
+                            <option value="Comorbidity" ${dx.type === 'Comorbidity' ? 'selected' : ''}>Comorbidity</option>
+                        </select>
+                    </td>
+                    <td class="text-center clickable-cell ${underlyingCellClass}" onclick="toggleUnderlying('${code}')" title="Click to toggle Y/N">
+                        <span class="${isUnderlyingEdited ? 'unsaved-change' : ''}">${dx.underlying}</span>
+                    </td>
+                    ${ipdColumns}
+                    <td class="text-center"><span class="badge bg-success-subtle border border-success text-success">Active</span></td>
+                    <td class="text-center">
+                        ${resetButton}
+                        <i class="bi bi-trash icon-action text-danger" title="Delete" onclick="deleteRow('${code}')"></i>
+                    </td>
+                </tr>
+            `;
+            tableBody.innerHTML += newRow;
+            rowCount++;
+        }
+
+        document.getElementById('saveCount').textContent = rowCount;
+    }
+
+    function updateType(code, newType) {
+        const dx = pendingDiagnoses[code];
+        
+        if (newType === 'Principal') {
+            if (principalCode && principalCode !== code) {
+                const oldDx = pendingDiagnoses[principalCode];
+                oldDx.type = 'Secondary';
+                oldDx.isEdited = checkIsEdited(oldDx); 
+            }
+            principalCode = code;
+        } else if (code === principalCode && newType !== 'Principal') {
+            principalCode = null; 
+            const remainingCodes = Object.keys(pendingDiagnoses).filter(c => c !== code);
+            if (remainingCodes.length > 0) {
+                 const newPrincipalCode = remainingCodes[0];
+                 pendingDiagnoses[newPrincipalCode].type = 'Principal';
+                 pendingDiagnoses[newPrincipalCode].isEdited = checkIsEdited(pendingDiagnoses[newPrincipalCode]);
+                 principalCode = newPrincipalCode;
+            }
+        }
+        
+        dx.type = newType;
+        dx.isEdited = checkIsEdited(dx);
+        renderPendingTable(); 
+    }
+
+    function deleteRow(code) {
+        if (confirm(`คุณต้องการลบ Code ${code} ออกจากรายการหรือไม่?`)) {
+            const isOldPrincipal = (code === principalCode);
+            delete pendingDiagnoses[code];
+            
+            if (isOldPrincipal) {
+                principalCode = null;
+                const remainingCodes = Object.keys(pendingDiagnoses);
+                if (remainingCodes.length > 0) {
+                    const newPrincipalCode = remainingCodes[0];
+                    pendingDiagnoses[newPrincipalCode].type = 'Principal';
+                    pendingDiagnoses[newPrincipalCode].isEdited = checkIsEdited(pendingDiagnoses[newPrincipalCode]);
+                    principalCode = newPrincipalCode;
+                }
+            }
+            
+            renderPendingTable();
+            updateDefaultTypeSelect(); 
+        }
+    }
+
+    function saveDiagnosisList() {
+        if (Object.keys(pendingDiagnoses).length === 0) {
+            alert('❌ ไม่มีรายการ Diagnosis ให้บันทึก');
+            return;
+        }
+        
+        const hasPrincipal = Object.values(pendingDiagnoses).some(dx => dx.type === 'Principal');
+        if (!hasPrincipal) {
+            alert('❌ ต้องมี Diagnosis อย่างน้อย 1 รายการที่เป็นประเภท "Principal" ก่อนทำการบันทึก');
+            return;
+        }
+
+        for (const code in pendingDiagnoses) {
+            const dx = pendingDiagnoses[code];
+            dx.original.type = dx.type;
+            dx.original.docDx = dx.docDx;
+            dx.original.underlying = dx.underlying;
+            dx.original.admission = dx.admission; 
+            dx.original.preOp = dx.preOp;         
+            dx.original.postOp = dx.postOp;       
+            dx.original.discharge = dx.discharge; 
+            dx.original.site = dx.site; 
+            dx.original.laterality = dx.laterality; 
+            dx.original.severity = dx.severity;     
+            dx.isEdited = false;
+        }
+
+        const dxList = JSON.stringify(pendingDiagnoses, null, 2);
+        alert('✅ บันทึก Diagnosis เรียบร้อยแล้ว (สถานะการแก้ไขถูกรีเซ็ตแล้ว):\n\n' + dxList);
+        
+        renderPendingTable(); 
+    }
+    
+    // Initial setup
+    document.addEventListener('DOMContentLoaded', () => {
+        isIpdMode = document.getElementById('opdIpdSwitch').checked; 
+        
+        updateLayoutForSystem(currentSearchSystem); 
+        
+        renderPendingTable();
+        updateDefaultTypeSelect();
+        
+        renderPastDiagnosisList(); 
+        renderFavoriteList();
+        
+        document.getElementById('detailsInput').addEventListener('input', function() {
+            const detailsInputGroup = document.getElementById('detailsInputGroup');
+            const mandatoryWarning = document.getElementById('mandatoryNoteWarning');
+            const selectedCode = document.getElementById('icdSearchInput').dataset.selectedCode;
+
+            if (selectedCode === X001_CODE || selectedCode === Z001_CODE) {
+                if (this.value.trim() !== '') {
+                    detailsInputGroup.classList.remove('force-details-input');
+                    mandatoryWarning.classList.add('d-none');
+                } else {
+                     detailsInputGroup.classList.add('force-details-input');
+                     mandatoryWarning.classList.remove('d-none');
+                }
+            }
+        });
+    });
+</script>
+<style>
+/* Add spinning animation for loading indicator */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.spin {
+  animation: spin 1s linear infinite;
+}
+</style>
+</body>
+</html>
