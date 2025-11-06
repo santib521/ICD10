@@ -3,53 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Diagnosis Entry - V39 (API Fix & Aggressive Filtering)</title>
+    <title>Diagnosis Entry - V44 (Gemini API Fixed)</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <style>
         /* BASE STYLES - Compacted & Elegant */
         body { background-color: #f0f2f5; font-size: 0.9rem; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
-        .main-container { max-width: 1350px; } /* Increased Max Width */
+        .main-container { max-width: 1350px; } 
         .diagnosis-card { border: none; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); background-color: white; }
         
         /* HEADER */
         .header-section { 
-            background-color: #1a73e8; /* Google Blue */
+            background-color: #0c8046; /* Green for V44 */
             color: white; 
             padding: 12px 25px; 
-            border-bottom: 1px solid #0d47a1; 
+            border-bottom: 1px solid #085e33; 
             border-radius: 12px 12px 0 0; 
             font-size: 1.1rem; 
             font-weight: 500; 
         }
         
-        .entry-section { 
-            padding: 20px 25px 15px; 
-        }
-        
-        /* INPUT CONTROL - Compacted Height (35px) */
-        .form-label { 
-            font-size: 0.85rem; 
-            margin-bottom: 3px; 
-            font-weight: 600;
-        }
-        .form-control-compact, .form-select-compact { 
-            height: 35px; 
-            padding: 0.375rem 0.75rem; 
-            font-size: 0.9rem; 
-            border-radius: 6px;
-        }
+        .entry-section { padding: 20px 25px 15px; }
+        .form-label { font-size: 0.85rem; margin-bottom: 3px; font-weight: 600;}
+        .form-control-compact, .form-select-compact { height: 35px; padding: 0.375rem 0.75rem; font-size: 0.9rem; border-radius: 6px;}
         .input-group > .btn { height: 35px; padding: 0 8px; }
-
-        /* SEARCH BAR & PRIMARY ACTIONS ROW */
-        .search-action-row { 
-            align-items: center;
-            padding-bottom: 15px; 
-            margin-bottom: 15px;
-            border-bottom: 1px solid #e1e4e8;
-        }
-
-        /* SEARCH RESULTS STYLES */
+        .search-action-row { align-items: center; padding-bottom: 15px; margin-bottom: 15px; border-bottom: 1px solid #e1e4e8;}
         .search-results-list {
             position: absolute;
             z-index: 1000;
@@ -73,127 +51,34 @@
         .dropdown-item.list-item-action:hover {
             background-color: #f7f9fa;
         }
-
-        /* BUTTONS */
-        .btn-add-dx { 
-            background-color: #0c8046; 
-            border: none; 
-            color: white; 
-            min-width: 85px; 
-            height: 35px; 
-            border-radius: 6px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            font-weight: 600;
-        }
+        .badge-llm-score { font-size: 0.75rem; margin-right: 5px; }
+        .btn-add-dx { background-color: #0c8046; border: none; color: white; min-width: 85px; height: 35px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); font-weight: 600;}
         .btn-add-dx:hover { background-color: #0a6638; }
-
-        .btn-action-group .btn { 
-            height: 35px; 
-            padding: 0 12px; 
-            font-size: 0.9rem; 
-            border-radius: 6px; 
-            color: #34495e;
-            border-color: #ced4da;
-        }
+        .btn-action-group .btn { height: 35px; padding: 0 12px; font-size: 0.9rem; border-radius: 6px; color: #34495e; border-color: #ced4da;}
         .btn-action-group .btn:hover { background-color: #f0f2f5; }
-
-        .favorite-btn-details { 
-            height: 35px; 
-            width: 35px; 
-            padding: 0; 
-            border-radius: 0 6px 6px 0; 
-            background-color: #fff0f0; 
-            border-color: #ced4da !important; 
-            color: #dc3545; 
-            transition: background-color 0.15s;
-        }
+        .favorite-btn-details { height: 35px; width: 35px; padding: 0; border-radius: 0 6px 6px 0; background-color: #fff0f0; border-color: #ced4da !important; color: #dc3545; transition: background-color 0.15s;}
         .favorite-btn-details:hover { background-color: #ffe0e0; }
-
-        .advance-search-box { 
-            display: flex; 
-            justify-content: flex-end; 
-            align-items: center; 
-            gap: 15px; 
-        }
-        .opd-ipd-switch {
-             display: flex; 
-             align-items: center; 
-             font-size: 0.85rem; 
-             font-weight: 600; 
-             gap: 5px;
-        }
+        .advance-search-box { display: flex; justify-content: flex-end; align-items: center; gap: 15px; }
+        .opd-ipd-switch { display: flex; align-items: center; font-size: 0.85rem; font-weight: 600; gap: 5px;}
         .opd-ipd-switch .form-check-label { font-weight: 400; }
-
-        /* ATTRIBUTES ROW - Grouped and Cleaned */
-        .attributes-row {
-            margin-top: 5px;
-            padding: 10px 0;
-            align-items: flex-end; 
-        }
-        
-        /* Coloring for Context */
+        .attributes-row { margin-top: 5px; padding: 10px 0; align-items: flex-end; }
         .text-clinical { color: #0c8046 !important; } 
-        .text-admin { color: #1a73e8 !important; } /* Blue for Admin */
-        
-        /* IPD Stage Checkboxes (Above table) */
-        .stage-group { 
-            display: flex;
-            gap: 15px;
-            align-items: center;
-            padding-top: 5px; 
-            font-size: 0.85rem;
-            min-height: 35px; 
-        }
+        .text-admin { color: #1a73e8 !important; } 
+        .stage-group { display: flex; gap: 15px; align-items: center; padding-top: 5px; font-size: 0.85rem; min-height: 35px; }
         .stage-group .form-check-label { font-weight: 400; font-size: 0.85rem; }
         .stage-group .form-check-input { margin-top: 0.3em; }
-
-        /* TABLE STYLES - Readability Focus */
-        .table-pending th, .table-pending td { 
-            padding: 0.3rem 0.5rem; 
-            font-size: 0.8rem; 
-            vertical-align: middle;
-            white-space: normal; 
-        }
-        .table-pending thead th {
-             background-color: #e9eff5;
-             color: #34495e;
-             font-weight: 600;
-             border-bottom: 2px solid #cfd3d8;
-             white-space: nowrap;
-        }
-        .table-pending textarea.form-control-sm {
-            resize: vertical; 
-            min-height: 30px; 
-            max-height: 80px; 
-            overflow-y: auto; 
-            line-height: 1.2;
-            padding: 0.2rem 0.4rem;
-        }
-        .table-pending select.form-select-sm {
-            padding: 0.2rem 0.4rem;
-            font-size: 0.75rem;
-        }
+        .table-pending th, .table-pending td { padding: 0.3rem 0.5rem; font-size: 0.8rem; vertical-align: middle; white-space: normal; }
+        .table-pending thead th { background-color: #e9eff5; color: #34495e; font-weight: 600; border-bottom: 2px solid #cfd3d8; white-space: nowrap;}
+        .table-pending textarea.form-control-sm { resize: vertical; min-height: 30px; max-height: 80px; overflow-y: auto; line-height: 1.2; padding: 0.2rem 0.4rem;}
+        .table-pending select.form-select-sm { padding: 0.2rem 0.4rem; font-size: 0.75rem;}
         .search-code { font-weight: 700; color: #1a73e8; } 
-
-        /* Unsaved Changes */
         .table-danger { --bs-table-bg-state: #fff0f0; }
         .unsaved-change { color: #dc3545 !important; font-weight: 600; }
         .unsaved-change-cell { box-shadow: 0 0 0 1px #dc3545 inset; background-color: #fffafa; }
-
-        /* Interactive Checkbox in Table */
-        .table-pending td .form-check-input {
-            margin-top: 0;
-            width: 1.1em;
-            height: 1.1em;
-            cursor: pointer;
-        }
-        .clickable-cell {
-            cursor: pointer;
-            transition: background-color 0.1s;
-        }
-        .clickable-cell:hover {
-            background-color: #f0f0f0;
-        }
+        .table-pending td .form-check-input { margin-top: 0; width: 1.1em; height: 1.1em; cursor: pointer;}
+        .clickable-cell { cursor: pointer; transition: background-color 0.1s;}
+        .clickable-cell:hover { background-color: #f0f0f0;}
+        /* End CSS V44 */
     </style>
 </head>
 <body>
@@ -201,7 +86,7 @@
 <div class="container main-container mt-4 mb-5">
     <div class="card diagnosis-card">
         <div class="header-section">
-            Diagnosis (ICD-10 / SNOMED) Entry - **V39 (API Fix & Aggressive Filtering)**
+            Diagnosis (ICD-10 / SNOMED) Entry - **V44 (Gemini API Call Fixed)**
         </div>
         
         <div class="entry-section">
@@ -411,26 +296,17 @@
     let currentSearchSystem = 'ICD-10'; 
     
     // =========================================================================
-    // 🚀 REAL API Configuration 
-    // V39: Updated the SNOMED API base with a more stable, general date
-    // =========================================================================
+    // 🔴 ⚠️ WARNING: GEMINI API KEY IN FRONTEND (PROTOTYPE ONLY) ⚠️ 🔴
+    // REPLACE 'YOUR_GEMINI_API_KEY_HERE' WITH YOUR ACTUAL KEY
+    const GEMINI_API_KEY = 'AIzaSyBX4x_sffJXdjp5tpQGpTgMbNLipDGKOC8'; 
+    const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+
     // SNOMED CT API (Snowstorm Public Instance)
-    const SNOMED_API_BASE = 'https://browser.ihtsdotools.org/snowstorm/snomed-ct/MAIN/2025-06-01'; 
+    const SNOMED_API_BASE = 'https://browser.ihtsdotools.org/snowstorm/snomed-ct/MAIN/2025-10-01'; 
     const SNOMED_REFSET_ENDPOINT = `${SNOMED_API_BASE}/members`; 
-
-    // NIH Clinical Tables API (Used for ICD-10 Search AND Description Lookup)
     const ICD10_API_BASE = 'https://clinicaltables.nlm.nih.gov/api/icd10cm/v3/search'; 
-    
-    // SNOMED to ICD-10 Complex Map Refset ID 
-    const ICD10_COMPLEX_MAP_REFSET_ID = '447562003'; 
-
-    // SNOMED to ICD-10 Simple Map Refset ID 
     const SNOMED_TO_ICD10_SIMPLE_MAP_REFSET_ID = '447561000124106'; 
-
-    // ECL Filter: Clinical Finding (Diagnosis) ID: 404684003 (ใช้ในการค้นหา SNOMED เพื่อจำกัดให้เป็น Diagnosis)
-    const CLINICAL_FINDING_ECL = '<<404684003'; 
-
-    const DEBOUNCE_DELAY = 300; // หน่วงเวลาการค้นหา 300ms เพื่อลดภาระของ Server
+    const DEBOUNCE_DELAY = 300; 
     // =========================================================================
 
     // --- Data Storage and State ---
@@ -442,7 +318,7 @@
     const X001_CODE = 'X00.1';
     const Z001_CODE = 'Z00.1';
     
-    // === MOCKUP DATA: Past DX & Favorites (ไม่ได้ใช้ API) ===
+    // === MOCKUP DATA: Past DX & Favorites (Used for non-API functions) ===
     let DIAGNOSES_HISTORY = [
         { code: 'I10', desc: 'Essential (primary) hypertension', system: 'ICD-10' }, 
         { code: '44054006', desc: 'Diabetes mellitus type 2', system: 'SNOMED' }
@@ -453,28 +329,20 @@
     ];
     // =======================================
     
-    // --- V35 Function: Get ICD-10 Description ---
+    // --- Core API/Mapping Functions (Same as V41) ---
     async function getIcd10Description(icdCode) {
+        // ... (Implementation remains the same)
         try {
-            // ใช้ NIH Clinical Tables API ในโหมด Search โดยระบุแค่รหัสเต็ม
             const apiUrl = `${ICD10_API_BASE}?sf=code,name&terms=${encodeURIComponent(icdCode)}&maxList=1`;
             const response = await fetch(apiUrl);
-            
             if (!response.ok) {
-                console.error(`ICD-10 Description API HTTP error: ${response.status}`);
                 return `(Desc Error: ${response.status})`; 
             }
-            
             const data = await response.json(); 
-            
-            // รูปแบบข้อมูล: [total_count, [codes...], null, [[code, description]...]]
             if (data && data.length > 3 && data[3] && data[3].length > 0) {
-                 // item[1] คือ Description
                 return data[3][0][1];   
             }
-            
             return `(Desc Not Found)`; 
-            
         } catch (error) {
             console.error('ICD-10 Description API Fetch Failed:', error);
             return `(Desc Error: Network Fail)`;
@@ -482,8 +350,8 @@
     }
 
 
-    // --- V35 Function: REAL MAPPING ---
     async function getMappedCode(code, system) { 
+        // ... (Implementation remains the same for SNOMED-to-ICD mapping)
         try {
             if (system === 'SNOMED') {
                 let mappedIcdCode = null;
@@ -507,26 +375,24 @@
                     }
                 }
                 
-                // 2. Fallback: ตรวจสอบ Complex Map (447562003) ถ้า Simple Map ไม่เจอ
+                // 2. Fallback: ตรวจสอบ Complex Map (447562003) 
                 if (!mappedIcdCode) {
+                    const ICD10_COMPLEX_MAP_REFSET_ID = '447562003';
                     apiUrl = `${SNOMED_REFSET_ENDPOINT}?active=true&refsetId=${ICD10_COMPLEX_MAP_REFSET_ID}&referencedComponentId=${code}&limit=1`;
                     response = await fetch(apiUrl);
                     
-                    if (!response.ok) {
-                        return `Error: API ${response.status}`; 
-                    }
-                    let data = await response.json(); 
-
-                    if (data.items && data.items.length > 0) {
-                        const additionalFields = data.items[0].additionalFields;
-                        if (additionalFields) {
-                            mappedIcdCode = additionalFields.mapTarget; 
-                            mapType = 'Complex Map';
+                    if (response.ok) {
+                        let data = await response.json(); 
+                        if (data.items && data.items.length > 0) {
+                            const additionalFields = data.items[0].additionalFields;
+                            if (additionalFields && additionalFields.mapTarget) {
+                                mappedIcdCode = additionalFields.mapTarget; 
+                                mapType = 'Complex Map';
+                            }
                         }
                     }
                 }
 
-                // 3. ถ้าเจอ ICD Code (ไม่ว่าจะ Simple หรือ Complex) ให้ดึง Description
                 if (mappedIcdCode) {
                     const icdDescription = await getIcd10Description(mappedIcdCode);
                     return `${mappedIcdCode} - ${icdDescription} (${mapType})`;
@@ -535,32 +401,116 @@
                 return `- (No Map Found)`; 
 
             } else if (system === 'ICD-10') {
-                // ICD-10 to SNOMED mapping (Reverse Lookup)
-                const apiUrl = `${SNOMED_REFSET_ENDPOINT}?active=true&refsetId=${ICD10_COMPLEX_MAP_REFSET_ID}&mapTarget=${code}&limit=1`;
-                const response = await fetch(apiUrl);
-                
-                if (!response.ok) {
-                    return `Error: API ${response.status}`; 
-                }
-                const data = await response.json(); 
-                
-                if (data.items && data.items.length > 0) {
-                    const conceptId = data.items[0].referencedComponentId;
-                    return `${conceptId} (SNO)`;
-                }
-                return `- (No Map Found)`; 
+                return `- (ICD -> SNO Map Mock)`; 
             }
             return '-';
 
         } catch (error) {
             console.error('Mapping API Fetch Failed (Network/CORS):', error);
-            return `Error: Network Fail (Check CORS/Console)`;
+            return `Error: Network Fail`;
         }
     }
     // -----------------------------
 
-    // --- Core UI/State Functions (Remain the same as V34/V35) ---
-    
+    // =========================================================================
+    // 🧠 V44: GEMINI DIRECT API CALL FUNCTION (FIXED PAYLOAD)
+    // =========================================================================
+
+    /**
+     * @description REAL CALL: Calls the actual Gemini API (gemini-2.5-flash) for structured SNOMED suggestions.
+     * Uses a highly structured prompt to enforce JSON output.
+     * @param {string} query The natural language text input by the physician.
+     * @returns {Array<Object>} An array of suggested SNOMED concepts.
+     */
+    async function callGeminiForSnomedSuggestions(query) {
+        
+        if (GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY_HERE') {
+             alert('❌ Error: กรุณากำหนด GEMINI_API_KEY ในโค้ดก่อนทำการทดสอบ');
+             return [];
+        }
+
+        const PROMPT = `You are a clinical coder expert tasked with converting raw clinical text into a structured list of relevant SNOMED CT concepts.
+Analyze the following doctor's note and extract the most appropriate Clinical Findings, Disorders, and Procedures.
+You MUST return the output as a JSON array only, following this exact schema:
+[
+  {
+    "code": "SNOMED Concept ID (e.g., 363746003)",
+    "description": "SNOMED Preferred Term and Type (e.g., Acute pharyngitis (disorder))",
+    "system": "SNOMED",
+    "score": "Relevance and Clinical Type (e.g., 'Disorder (High)', 'Finding (Medium)', 'Procedure (Low)')"
+  }
+]
+Do not include any descriptive text, explanations, or markdown fences (like \`\`\`json) outside of the JSON array itself.
+The output MUST be parsable as a standard JSON array.
+
+Clinical Text: "${query}"`;
+        
+        console.log(`LLM V44: Calling Gemini API for query: "${query}"`);
+
+        try {
+            const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{
+                        role: 'user',
+                        parts: [{ text: PROMPT }]
+                    }],
+                    // 🚨 FIXED: Renamed 'config' to 'generationConfig'
+                    generationConfig: { 
+                         // Use a lower temperature for higher factual accuracy (coding)
+                        temperature: 0.1 
+                    }
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error("Gemini API Error:", errorData);
+                // Display the error message from the API to the user
+                throw new Error(`Gemini API Failed with status: ${response.status}. Message: ${errorData.error.message || 'Check browser console for details.'}`);
+            }
+
+            const data = await response.json();
+            
+            // Extract the generated text (which should be pure JSON string)
+            const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+
+            if (!generatedText) {
+                 return [{ code: 'NO_RES', description: 'Gemini returned no valid content.', system: 'SNOMED', score: 'Error' }];
+            }
+            
+            // Attempt to parse the text as JSON
+            let results;
+            try {
+                 // Clean up common LLM errors (e.g., wrapping in ```json)
+                const cleanedText = generatedText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+                results = JSON.parse(cleanedText);
+
+            } catch (e) {
+                console.error("Failed to parse JSON response from Gemini:", e);
+                console.log("Raw response text:", generatedText);
+                return [{ code: 'JSON_ERR', description: 'Failed to parse LLM JSON output. Check console.', system: 'SNOMED', score: 'Error' }];
+            }
+            
+            // Validate the parsed structure
+            if (Array.isArray(results) && results.every(item => item.code && item.description && item.system === 'SNOMED')) {
+                return results;
+            } else {
+                console.error("JSON structure from Gemini is incorrect:", results);
+                return [{ code: 'STRUCT_ERR', description: 'LLM returned invalid result structure.', system: 'SNOMED', score: 'Error' }];
+            }
+
+        } catch (error) {
+            console.error('Failed to call Gemini API:', error);
+            alert(`❌ Gemini API Call ล้มเหลว: ${error.message}`);
+            return [];
+        }
+    }
+    // =========================================================================
+
+
+    // --- Core UI/State Functions (Unchanged) ---
     function updateLayoutForSystem(system) {
         const clinicalSection = document.getElementById('clinicalRefinementsSection');
         const stageCol = document.getElementById('encounterStageSection');
@@ -598,10 +548,10 @@
         
         if (currentSearchSystem === 'ICD-10') {
             currentSearchSystem = 'SNOMED';
-            toggleBtn.textContent = 'SNOMED'; 
+            toggleBtn.textContent = 'SNOMED (Smart Search)'; // Updated text
             toggleBtn.classList.remove('btn-info', 'text-white');
             toggleBtn.classList.add('btn-warning', 'text-dark');
-            searchInput.placeholder = 'พิมพ์วลีทางการแพทย์ (เช่น Fever 38.5°C sore throat) หรือรหัส...';
+            searchInput.placeholder = 'พิมพ์วลีทางการแพทย์ (เช่น Fever 38.5 and sore throat for 2 days)...'; // Updated placeholder
             searchInput.dataset.searchSystem = 'SNOMED';
             
             document.getElementById('siteSelect').value = 'N/A'; 
@@ -652,8 +602,8 @@
         document.getElementById('searchResults').classList.add('d-none');
         document.getElementById('icdSearchInput').dataset.selectedCode = '';
         document.getElementById('icdSearchInput').dataset.selectedDesc = '';
-        document.getElementById('detailsInput').value = '';
         
+        document.getElementById('detailsInput').value = '';
         document.getElementById('siteSelect').value = 'N/A'; 
         document.getElementById('lateralitySelect').value = 'N/A';
         document.getElementById('severitySelect').value = 'N/A'; 
@@ -674,10 +624,10 @@
         currentSearchSystem = system;
         const toggleBtn = document.getElementById('systemToggleBtn');
         if (system === 'SNOMED') {
-             toggleBtn.textContent = 'SNOMED'; 
+             toggleBtn.textContent = 'SNOMED (Gemini Smart Search)'; 
              toggleBtn.classList.remove('btn-info', 'text-white');
              toggleBtn.classList.add('btn-warning', 'text-dark');
-             document.getElementById('icdSearchInput').placeholder = 'พิมพ์วลีทางการแพทย์ (เช่น Fever 38.5°C sore throat) หรือรหัส...';
+             document.getElementById('icdSearchInput').placeholder = 'พิมพ์วลีทางการแพทย์ (เช่น Fever 38.5 and sore throat)...';
         } else {
              toggleBtn.textContent = 'ICD-10'; 
              toggleBtn.classList.remove('btn-warning', 'text-dark');
@@ -707,47 +657,25 @@
         }
     }
 
-    // 1. ฟังก์ชันหลักสำหรับเรียก API และประมวลผลผลลัพธ์ (V39 Update: Single, Aggressively Filtered Search)
+
     async function fetchAndRenderResults(query) {
         const loadingIndicator = document.getElementById('searchResults');
-        loadingIndicator.innerHTML = '<div class="p-2 text-center text-primary fst-italic"><i class="bi bi-arrow-repeat spin me-2"></i>กำลังค้นหาจาก API...</div>';
-        loadingIndicator.classList.remove('d-none');
         
         let results = [];
         
         try {
             if (currentSearchSystem === 'SNOMED') {
-                // --- V39: SNOMED NLP Aggressive Filtering and Single Search ---
-                let searchTerms = query.toLowerCase()
-                                       .replace(/[^\w\sก-๙]/gi, ' ') // 1. Replace all punct/symbols with space
-                                       .replace(/[0-9]+/g, '') // 2. Remove all numbers (temperature, e.g., 38.5 -> '')
-                                       .split(/\s+/) // 3. Split into tokens (fever, , , and, sore, throat)
-                                       .filter(term => term.length > 2 && term !== 'and' && term !== 'or'); // 4. Filter out short words (like 'a', 'in') and known conjunctions. Requires length > 2 to remove spurious empty strings/very short words from step 2 and 3.
-
-                let processedQuery = searchTerms.join(' '); // "fever sore throat"
+                 loadingIndicator.innerHTML = '<div class="p-2 text-center text-success fst-italic"><i class="bi bi-arrow-repeat spin me-2"></i>กำลังค้นหาด้วย Gemini AI...</div>';
+                 loadingIndicator.classList.remove('d-none');
                 
-                if (processedQuery.trim() === '') {
-                    // Fallback to the original query if filtering removed everything
-                    processedQuery = query.trim();
-                }
-
-                console.log('SNOMED Search Query (V39 - Aggressively Filtered):', processedQuery);
-                // The term parameter is automatically URL-encoded by the fetch function.
-                let apiUrl = `${SNOMED_API_BASE}/concepts?term=${encodeURIComponent(processedQuery)}&active=true&ecl=${CLINICAL_FINDING_ECL}&limit=50`;
+                // --- V44: Gemini API Call (Fixed) ---
+                results = await callGeminiForSnomedSuggestions(query);
                 
-                let response = await fetch(apiUrl);
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                let data = await response.json();
-                
-                results = data.items.map(item => ({
-                    code: item.conceptId,     
-                    description: item.pt?.term || item.fsn?.term,   
-                    system: 'SNOMED'
-                }));
-
-
             } else if (currentSearchSystem === 'ICD-10') {
-                // ICD-10 Search (NIH Clinical Tables API) - Standard V36/V37 logic
+                 loadingIndicator.innerHTML = '<div class="p-2 text-center text-primary fst-italic"><i class="bi bi-arrow-repeat spin me-2"></i>กำลังค้นหา ICD-10...</div>';
+                 loadingIndicator.classList.remove('d-none');
+                
+                // ICD-10 Search (NIH Clinical Tables API) - Standard V40 logic
                 let apiUrl = `${ICD10_API_BASE}?sf=code,name&terms=${encodeURIComponent(query)}&maxList=50`;
                 const response = await fetch(apiUrl);
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -757,7 +685,8 @@
                     results = data[3].map(item => ({
                         code: item[0],          
                         description: item[1],   
-                        system: 'ICD-10'
+                        system: 'ICD-10',
+                        score: 'ICD-10 Match' 
                     }));
                 }
             }
@@ -770,7 +699,6 @@
         }
     }
 
-    // ฟังก์ชันช่วยแสดงผลลัพธ์
     function renderSearchResults(results, term) {
         const resultsDiv = document.getElementById('searchResults');
         resultsDiv.innerHTML = '';
@@ -780,6 +708,7 @@
                 const code = dx.code;
                 const desc = dx.description;
                 const system = dx.system;
+                const score = dx.score || 'N/A'; 
                 
                 const isHardcode = (code === X001_CODE || code === Z001_CODE); 
                 const isSnomed = system === 'SNOMED';
@@ -789,11 +718,13 @@
                 
                 const hardcodeBadge = isHardcode ? '<span class="badge bg-danger float-end ms-2">DETAIL REQ.</span>' : '';
                 const systemBadge = `<span class="badge ${badgeClass}">${systemLabel.slice(0, 4)}</span>`;
+                const scoreBadge = isSnomed ? `<span class="badge badge-llm-score bg-success-subtle text-success border border-success">${score}</span>` : '';
+
 
                 const item = document.createElement('div');
                 item.className = 'search-item';
                 const safeDesc = desc.replace(/'/g, "\\'"); 
-                item.innerHTML = `${systemBadge} <span class="search-code">${code}</span> - ${desc} ${hardcodeBadge}`;
+                item.innerHTML = `${systemBadge} ${scoreBadge} <span class="search-code">${code}</span> - ${desc} ${hardcodeBadge}`;
                 item.onclick = () => selectDiagnosis(code, safeDesc, system); 
                 resultsDiv.appendChild(item);
             });
@@ -803,14 +734,14 @@
         resultsDiv.classList.remove('d-none');
     }
 
-    // 2. ฟังก์ชัน Debounced Search สำหรับผูกกับ Input (ป้องกันการยิง API ถี่เกินไป)
     function searchDiagnosis(query) {
         if (searchTimeout) {
             clearTimeout(searchTimeout);
         }
         
         const term = query.trim();
-        const minLength = 2;
+        // LLM Search can be more flexible (min 1 char for quick prototype testing)
+        const minLength = currentSearchSystem === 'SNOMED' ? 1 : 2; 
         
         if (term.length >= minLength) { 
             document.getElementById('icdSearchInput').dataset.selectedCode = '';
@@ -823,8 +754,6 @@
             document.getElementById('searchResults').classList.add('d-none');
         }
     }
-
-    // =========================================================================
 
     document.getElementById('icdSearchInput').addEventListener('input', function() {
         searchDiagnosis(this.value);
@@ -839,7 +768,6 @@
         }
     });
 
-    // ... (Favorite/Past DX Logic remains the same)
     function renderPastDiagnosisList() {
         const dropdown = document.getElementById('pastDxListDropdown');
         dropdown.innerHTML = ''; 
@@ -912,8 +840,7 @@
             alert(`💡 ${code} อยู่ในรายการโปรดอยู่แล้ว`);
         }
     }
-    // ------------------------------------------
-
+    
     function checkIsEdited(dx) {
          if (!dx || !dx.original) return false;
 
@@ -992,9 +919,7 @@
         const originalLaterality = laterality; 
         const originalSeverity = severity;   
         
-        // --- START: ASYNC MAPPING LOGIC ---
-        
-        let mappedCodeResult = 'กำลัง Mapping...'; // แสดงสถานะ Mapping เสมอ
+        let mappedCodeResult = 'กำลัง Mapping...'; 
         
         pendingDiagnoses[code] = { 
             code, 
@@ -1007,7 +932,7 @@
             postOp: postOpStatus,
             discharge: dischargeStatus,
             system: system, 
-            mappedCode: mappedCodeResult, // สถานะชั่วคราว
+            mappedCode: mappedCodeResult, 
             site: originalSite, 
             laterality: originalLaterality, 
             severity: originalSeverity,     
@@ -1028,20 +953,15 @@
         };
         
         clearSearch();
-        renderPendingTable(); // แสดงตารางครั้งแรกพร้อมสถานะ 'Mapping...' 
+        renderPendingTable(); 
 
-        // 2. ร้องขอ Mapping และรอผลลัพธ์จริงจาก API
         mappedCodeResult = await getMappedCode(code, system); 
         
-        // 3. อัปเดต mappedCode ด้วยผลลัพธ์จริง
         if(pendingDiagnoses[code]) { 
             pendingDiagnoses[code].mappedCode = mappedCodeResult;
         }
         
-        // 4. แสดงตารางอีกครั้งพร้อมผลลัพธ์จริง
         renderPendingTable();
-        
-        // --- END: ASYNC MAPPING LOGIC ---
     }
     
     function resetRowChanges(code) {
@@ -1128,7 +1048,6 @@
         });
 
         document.querySelectorAll('.snomed-col').forEach(th => {
-            // Logic เพื่อแสดง Clinical Columns ถ้ามี SNOMED ในรายการ
             th.style.display = 'none'; 
         });
         
@@ -1157,7 +1076,6 @@
             const severityCellClass = isSeverityEdited && dx.system === 'SNOMED' ? 'unsaved-change-cell' : '';
 
             
-            // แสดง Clinical Columns เฉพาะ Diagnosis ที่เป็น SNOMED Source เท่านั้น
             const clinicalColumns = `
                 <td class="${siteCellClass}" style="display: ${dx.system === 'SNOMED' ? 'table-cell' : 'none'};">
                      <select class="form-select form-select-sm" onchange="updateSite('${code}', this.value)">
@@ -1187,7 +1105,6 @@
                 </td>
             `;
             
-            // ถ้ามี SNOMED ในรายการ ต้องแสดง Clinical Columns ทั้งหมด
             const shouldShowSnomedColumns = Object.values(pendingDiagnoses).some(d => d.system === 'SNOMED');
             document.querySelectorAll('.snomed-col').forEach(th => {
                 th.style.display = shouldShowSnomedColumns ? 'table-cell' : 'none';
@@ -1231,7 +1148,7 @@
                     <td class="text-start">
                         <span class="text-secondary fw-bold" style="font-size: 0.75rem;">${mappedCodeContent}</span>
                     </td>
-                    ${clinicalColumns} <td class="${docDxCellClass}">
+                    ${shouldShowSnomedColumns ? clinicalColumns : ''} <td class="${docDxCellClass}">
                         <textarea rows="1" class="form-control form-control-sm" 
                                   onchange="updateDocDx('${code}', this.value)">${docDxValue}</textarea>
                     </td>
@@ -1336,8 +1253,6 @@
 
         const dxList = JSON.stringify(pendingDiagnoses, null, 2);
         alert('✅ บันทึก Diagnosis เรียบร้อยแล้ว (สถานะการแก้ไขถูกรีเซ็ตแล้ว):\n\n' + dxList);
-        
-        // 🔔 [สำคัญ]: ใน Production ให้ส่ง `pendingDiagnoses` ไปยัง API สำหรับบันทึกที่นี่
         
         renderPendingTable(); 
     }
